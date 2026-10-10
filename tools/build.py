@@ -328,6 +328,71 @@ STAYS = [
 ]
 
 
+# ------------------------------------------------------------------- reseñas
+# Solo se publican reseñas reales, copiadas tal cual de la plataforma.
+# Para sumar las de un alojamiento, agregá una entrada con su slug:
+#   fuente, url (página pública del alojamiento), puntaje, escala, cantidad,
+#   cats (puntajes por categoría, opcional) y quotes (comentarios textuales).
+# Un alojamiento sin entrada no muestra la sección.
+REVIEWS = {
+    "vintage": dict(
+        fuente="Airbnb",
+        url="https://www.airbnb.com.ar/rooms/1310259972888945107",
+        puntaje="5,0",
+        escala="5",
+        cantidad=4,
+        cats=[
+            ("Limpieza", "4,8"),
+            ("Veracidad", "5,0"),
+            ("Check-in", "5,0"),
+            ("Comunicación", "5,0"),
+            ("Ubicación", "5,0"),
+            ("Precio según calidad", "5,0"),
+        ],
+        quotes=[],  # ej.: dict(texto="...", autor="María", origen="Argentina", fecha="agosto de 2026")
+    ),
+}
+
+
+def reviews_block(slug):
+    r = REVIEWS.get(slug)
+    if not r:
+        return ""
+    n = r["cantidad"]
+    count = f"{n} reseña" + ("s" if n != 1 else "")
+    cats = ""
+    if r.get("cats"):
+        cats = '<dl class="rv__cats">' + "".join(
+            f"<div><dt>{esc(k)}</dt><dd>{esc(v)}</dd></div>" for k, v in r["cats"]
+        ) + "</dl>"
+    quotes = ""
+    if r.get("quotes"):
+        items = ""
+        for q in r["quotes"]:
+            who = q["autor"] + (f", {q['origen']}" if q.get("origen") else "")
+            when = f" · {q['fecha']}" if q.get("fecha") else ""
+            items += (
+                f'<figure class="rv__quote"><blockquote><p>{esc(q["texto"])}</p></blockquote>'
+                f"<figcaption>{esc(who)}{esc(when)}</figcaption></figure>"
+            )
+        quotes = f'<div class="rv__quotes">{items}</div>'
+    return f"""
+<section class="section section--tight" aria-labelledby="rv-title">
+  <div class="wrap">
+    <h2 id="rv-title">Reseñas de huéspedes</h2>
+    <div class="rv">
+      <div class="rv__score">
+        <p class="rv__num">{esc(r['puntaje'])}<span> sobre {esc(r['escala'])}</span></p>
+        <p class="rv__meta">{count} en {esc(r['fuente'])}</p>
+        <a class="link" href="{esc(r['url'])}" target="_blank" rel="noopener">Ver en {esc(r['fuente'])}</a>
+      </div>
+      {cats}
+    </div>
+    {quotes}
+  </div>
+</section>"""
+
+
 # ------------------------------------------------------------------- helpers
 _dims = {}
 
@@ -462,7 +527,10 @@ def page(title, description, body, base="", extra_head="", current=""):
       </ul>
     </div>
   </div>
-  <div class="wrap"><p class="site-footer__legal">Valores en dólares estadounidenses. Magos al Sur, 2026.</p></div>
+  <div class="wrap">
+    <p class="site-footer__legal">Valores en dólares estadounidenses. Magos al Sur, 2026.
+      <span class="visits" id="visits" hidden></span></p>
+  </div>
 </footer>
 <script src="{base}script.js" defer></script>
 </body>
@@ -692,6 +760,7 @@ def build_stay(s):
     </aside>
   </div>
 </section>
+{reviews_block(s['slug'])}
 <section class="section section--tight">
   <div class="wrap">
     <h2>Fotos</h2>

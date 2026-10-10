@@ -262,3 +262,22 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 300; letter-spacing: -.02em
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
 }
+
+/* ------------------------------------------------------------- reseñas */
+.rv { display: grid; grid-template-columns: minmax(0, 18rem) minmax(0, 1fr); gap: 2rem 4rem; align-items: start; padding-block: 1.5rem; border-block: 1px solid var(--silver); }
+.rv__num { margin: 0; font-family: var(--serif); font-size: clamp(3.5rem, 8vw, 5.5rem); font-weight: 300; line-height: 1; letter-spacing: -.03em; }
+.rv__num span { font-size: 1.1rem; letter-spacing: 0; color: var(--muted); font-family: var(--sans); }
+.rv__meta { margin: .5rem 0 .75rem; color: var(--muted); }
+.rv__cats { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); gap: 1rem 2rem; }
+.rv__cats dt { font-size: .88rem; color: var(--muted); }
+.rv__cats dd { margin: .1rem 0 0; font-family: var(--serif); font-size: 1.35rem; font-weight: 400; }
+.rv__quotes { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 2rem; margin-top: 2rem; }
+.rv__quote { margin: 0; padding-left: 1.25rem; border-left: 2px solid var(--violet); }
+.rv__quote blockquote { margin: 0; }
+.rv__quote p { margin: 0 0 .75rem; font-family: var(--serif); font-size: 1.2rem; font-weight: 300; line-height: 1.45; }
+.rv__quote figcaption { font-size: .92rem; color: var(--muted); }
+@media (max-width: 52rem) { .rv { grid-template-columns: 1fr; } }
+
+/* ------------------------------------------------------ contador de visitas */
+.visits { display: block; margin-top: .35rem; }
+.visits[hidden] { display: none; }

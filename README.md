@@ -20,6 +20,28 @@ Alojamientos: Lake Águilas, Lake Bandurrias, Downtown Mitre, Vintage, Lake Coli
 Cada alojamiento tiene un botón **Consultar por WhatsApp** que abre el chat con el mensaje ya escrito (nombre y destino), y otro por email.
 Las fotos se abren en un visor con flechas (teclado incluido).
 
+## Reseñas de huéspedes
+
+Cada alojamiento puede mostrar una sección **Reseñas de huéspedes** (puntaje, cantidad, puntajes por categoría y comentarios textuales, con link a la plataforma).
+Los datos están en `REVIEWS` dentro de `tools/build.py`. Un alojamiento sin entrada no muestra la sección.
+
+Hoy solo está cargado Vintage, con el resumen de Airbnb (5,0 sobre 5, 4 reseñas). Los comentarios individuales no se pudieron leer
+y las páginas de Booking no permiten lectura automática, así que no hay reseñas inventadas: faltan los textos reales.
+
+Para cargar las de un alojamiento: copiar puntaje, cantidad y 2 o 3 comentarios textuales (con nombre, país y mes) en su entrada de `REVIEWS` y correr `python3 tools/build.py`.
+
+## Contador de visitas
+
+Al pie de cada página aparece, en chico, "Hoy visitaron el sitio N personas". Cuenta una vez por navegador por día (hora de Argentina), ignora bots y guarda solo un número por día, sin datos personales.
+
+Funciona con la función `api/visits.js` y una base Redis gratuita de Upstash. Para activarlo en Vercel (una sola vez):
+
+1. En el proyecto de Vercel: **Storage** > **Create Database** > **Upstash Redis** (plan gratuito) y conectarla al proyecto.
+2. Vercel crea solo las variables `KV_REST_API_URL` y `KV_REST_API_TOKEN`.
+3. Volver a desplegar (Redeploy).
+
+Sin ese paso el sitio funciona igual: el contador simplemente no se muestra. No funciona abriendo los archivos en local.
+
 ## Tecnología
 
 - HTML y CSS puros; un script chico (`script.js`) para el menú móvil y el visor de fotos.
@@ -33,7 +55,8 @@ Las fotos se abren en un visor con flechas (teclado incluido).
 index.html, bariloche.html, las-grutas.html, la-toscana.html
 alojamientos/            una página por alojamiento
 styles.css               estilos y variables de marca (:root)
-script.js                menú móvil y visor de fotos
+script.js                menú móvil, visor de fotos y contador de visitas
+api/visits.js            función de Vercel del contador de visitas
 favicon.svg
 assets/img/              fotos (WebP)
 assets/fonts/            tipografías
@@ -97,6 +120,9 @@ en `STAYS` y las descripciones de las fotos en `ALTS`, y corré el generador.
 - **Logo:** la imagen que pasaron incluye un email viejo (`poeta964@hotmail.com`), así que no se usó. La marca del sitio es un símbolo provisorio de tres círculos entrelazados (los tres destinos). Si tienen el logo original en PNG con fondo transparente o vectorial, se reemplaza.
 - **Fotos:** Las Grutas y la Toscana no tienen fotos de la playa ni de los alrededores de la casa. Algunas imágenes muestran objetos personales (estantes, secaplatos) y convendría reemplazarlas por otras más ordenadas.
 - **Dominio:** al tener dominio, agregar `sitemap.xml`, `og:image` (URL absoluta) y la URL canónica.
+- **Reseñas de Booking:** faltan los textos y puntajes de Lake Águilas, Lake Bandurrias, Downtown Mitre, Lake Colibríes y Magos al Mar. Copiarlos de cada ficha (o pasar capturas) y cargarlos en `REVIEWS`. Conviene sumar también el link público de cada ficha.
+- **Reseñas de Vintage:** falta copiar los comentarios individuales de Airbnb.
+- **Contador de visitas:** requiere conectar Upstash Redis en Vercel (ver arriba).
 - **Consejos y experiencias de viaje:** no se incluyó una sección propia; hoy se deriva a Instagram. Queda como siguiente fase.
 
 ## Créditos y derechos

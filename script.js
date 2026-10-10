@@ -63,3 +63,31 @@
     if (e.key === 'ArrowRight') show(index + 1);
   });
 })();
+
+// Contador de visitas de hoy (chico, al pie). Si el servicio no responde, no se muestra nada.
+(function () {
+  var el = document.getElementById('visits');
+  if (!el || !window.fetch) return;
+
+  // Hora de Argentina, para que "hoy" coincida con el día del cliente.
+  var day;
+  try {
+    day = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).format(new Date());
+  } catch (e) { day = new Date().toISOString().slice(0, 10); }
+
+  // Cada navegador suma una sola vez por día.
+  var counted = false;
+  try { counted = localStorage.getItem('mas-visit') === day; } catch (e) {}
+
+  fetch('/api/visits' + (counted ? '' : '?hit=1'), { cache: 'no-store' })
+    .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+    .then(function (d) {
+      if (!d || typeof d.today !== 'number') return;
+      try { localStorage.setItem('mas-visit', day); } catch (e) {}
+      el.textContent = d.today === 1
+        ? 'Hoy visitó el sitio 1 persona.'
+        : 'Hoy visitaron el sitio ' + d.today.toLocaleString('es-AR') + ' personas.';
+      el.hidden = false;
+    })
+    .catch(function () {});
+})();
