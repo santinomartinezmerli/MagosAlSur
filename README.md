@@ -22,13 +22,14 @@ Las fotos se abren en un visor con flechas (teclado incluido).
 
 ## Reseñas de huéspedes
 
-Cada alojamiento puede mostrar una sección **Reseñas de huéspedes** (puntaje, cantidad, puntajes por categoría y comentarios textuales, con link a la plataforma).
-Los datos están en `REVIEWS` dentro de `tools/build.py`. Un alojamiento sin entrada no muestra la sección.
+Cada alojamiento muestra una sección **Reseñas de huéspedes** (puntaje, cantidad, comentarios textuales y link a la ficha de Booking o Airbnb).
+La home muestra tres comentarios destacados, y los listados muestran el puntaje debajo de cada alojamiento.
 
-Hoy solo está cargado Vintage, con el resumen de Airbnb (5,0 sobre 5, 4 reseñas). Los comentarios individuales no se pudieron leer
-y las páginas de Booking no permiten lectura automática, así que no hay reseñas inventadas: faltan los textos reales.
+Los datos están en `REVIEWS` dentro de `tools/build.py`. Para sumar o cambiar reseñas, editar esa entrada y correr `python3 tools/build.py`.
 
-Para cargar las de un alojamiento: copiar puntaje, cantidad y 2 o 3 comentarios textuales (con nombre, país y mes) en su entrada de `REVIEWS` y correr `python3 tools/build.py`.
+- Los comentarios son textuales (copiados de Booking), con nombre, país y mes de la estadía.
+- En Booking, el puntaje y la cantidad son el **promedio calculado** con las reseñas cargadas; la página lo dice ("Promedio de N reseñas en Booking"). Si Booking muestra otro número o más reseñas, cambiar `puntaje` y `cantidad` de esa entrada (y sacar `promedio=True` si se copia el número oficial).
+- Magos al Mar muestra las seis categorías de Booking; Vintage, el resumen de Airbnb (los comentarios individuales de Airbnb no están cargados).
 
 ## Contador de visitas
 
@@ -41,6 +42,15 @@ Funciona con la función `api/visits.js` y una base Redis gratuita de Upstash. P
 3. Volver a desplegar (Redeploy).
 
 Sin ese paso el sitio funciona igual: el contador simplemente no se muestra. No funciona abriendo los archivos en local.
+
+**Cómo saber si funciona:** abrir `https://TU-SITIO.vercel.app/api/visits`. La función siempre responde un JSON legible:
+
+| Respuesta | Significa |
+| --- | --- |
+| `{"ok":true,"today":12}` | Funciona. El contador aparece al recargar cualquier página. |
+| `{"ok":false,"reason":"sin-configurar"}` | Falta conectar la base Upstash Redis al proyecto (pasos de arriba) y volver a desplegar. |
+| `{"ok":false,"reason":"redis","detalle":"HTTP 401"}` | La base está conectada pero rechaza el acceso: revisar que `KV_REST_API_TOKEN` sea el del proyecto. |
+| Error 404 | La carpeta `api/` no quedó en la raíz del proyecto, al lado de `index.html`. |
 
 ## Tecnología
 
@@ -120,8 +130,8 @@ en `STAYS` y las descripciones de las fotos en `ALTS`, y corré el generador.
 - **Logo:** la imagen que pasaron incluye un email viejo (`poeta964@hotmail.com`), así que no se usó. La marca del sitio es un símbolo provisorio de tres círculos entrelazados (los tres destinos). Si tienen el logo original en PNG con fondo transparente o vectorial, se reemplaza.
 - **Fotos:** Las Grutas y la Toscana no tienen fotos de la playa ni de los alrededores de la casa. Algunas imágenes muestran objetos personales (estantes, secaplatos) y convendría reemplazarlas por otras más ordenadas.
 - **Dominio:** al tener dominio, agregar `sitemap.xml`, `og:image` (URL absoluta) y la URL canónica.
-- **Reseñas de Booking:** faltan los textos y puntajes de Lake Águilas, Lake Bandurrias, Downtown Mitre, Lake Colibríes y Magos al Mar. Copiarlos de cada ficha (o pasar capturas) y cargarlos en `REVIEWS`. Conviene sumar también el link público de cada ficha.
-- **Reseñas de Vintage:** falta copiar los comentarios individuales de Airbnb.
+- **Reseñas de Booking:** puntaje y cantidad son un promedio calculado con las reseñas que pasó el cliente. Confirmar contra el número que muestra Booking y cargar las reseñas que falten.
+- **Reseñas de Vintage:** solo está el resumen de Airbnb; faltan los comentarios individuales.
 - **Contador de visitas:** requiere conectar Upstash Redis en Vercel (ver arriba).
 - **Consejos y experiencias de viaje:** no se incluyó una sección propia; hoy se deriva a Instagram. Queda como siguiente fase.
 

@@ -1,8 +1,15 @@
 // Contador de visitas de hoy para Vercel.
 // Guarda un número por día (sin datos personales) en una base Redis de Upstash.
+//
 // Variables de entorno (las crea Vercel al conectar Upstash Redis al proyecto):
 //   KV_REST_API_URL y KV_REST_API_TOKEN   (o UPSTASH_REDIS_REST_URL y UPSTASH_REDIS_REST_TOKEN)
-// Sin esas variables responde 503 y el sitio simplemente no muestra el contador.
+//
+// Para poder diagnosticarlo desde el navegador, esta función siempre responde 200
+// con un JSON. Si algo falla, el JSON trae ok:false y el motivo en "reason":
+//   {"ok":true,"today":12}                    -> funciona
+//   {"ok":false,"reason":"sin-configurar"}    -> falta conectar la base en Vercel
+//   {"ok":false,"reason":"redis", ...}        -> la base respondió con error
+// El sitio solo muestra el contador cuando llega ok:true.
 
 const URL_ = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
 const TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -13,8 +20,10 @@ async function redis(command) {
     headers: { Authorization: 'Bearer ' + TOKEN, 'Content-Type': 'application/json' },
     body: JSON.stringify(command),
   });
-  if (!res.ok) throw new Error('redis ' + res.status);
-  return (await res.json()).result;
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  if (data && data.error) throw new Error(String(data.error));
+  return data.result;
 }
 
 function todayAR() {
@@ -24,14 +33,26 @@ function todayAR() {
 
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
-  if (!URL_ || !TOKEN) return res.status(503).json({ error: 'contador no configurado' });
-  if (req.method !== 'GET') return res.status(405).json({ error: 'método no permitido' });
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+
+  if (req.method !== 'GET') return res.status(405).json({ ok: false, reason: 'metodo-no-permitido' });
+
+  if (!URL_ || !TOKEN) {
+    return res.status(200).json({
+      ok: false,
+      reason: 'sin-configurar',
+      ayuda: 'Conectar una base Upstash Redis al proyecto en Vercel (Storage) y volver a desplegar.',
+    });
+  }
+
+  let hit = false;
+  try {
+    hit = new URL(req.url || '/', 'http://localhost').searchParams.get('hit') === '1';
+  } catch (e) { /* sin query */ }
+  const ua = String(req.headers['user-agent'] || '');
+  if (/bot|crawl|spider|preview|monitor|headless|lighthouse/i.test(ua)) hit = false;
 
   const key = 'visits:' + todayAR();
-  const ua = String(req.headers['user-agent'] || '');
-  const isBot = /bot|crawl|spider|preview|monitor|headless|lighthouse/i.test(ua);
-  const hit = req.query && req.query.hit === '1' && !isBot;
-
   try {
     let today;
     if (hit) {
@@ -40,8 +61,8 @@ module.exports = async function handler(req, res) {
     } else {
       today = Number((await redis(['GET', key])) || 0);
     }
-    return res.status(200).json({ today });
+    return res.status(200).json({ ok: true, today });
   } catch (e) {
-    return res.status(502).json({ error: 'no se pudo leer el contador' });
+    return res.status(200).json({ ok: false, reason: 'redis', detalle: String(e && e.message).slice(0, 80) });
   }
 };

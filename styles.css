@@ -281,3 +281,8 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 300; letter-spacing: -.02em
 /* ------------------------------------------------------ contador de visitas */
 .visits { display: block; margin-top: .35rem; }
 .visits[hidden] { display: none; }
+
+.rv__note { margin: 1.5rem 0 0; font-size: .9rem; color: var(--muted); }
+.rv__quote figcaption a { color: var(--violet); font-weight: 600; text-underline-offset: .2em; }
+.rv__quotes--home { margin-top: 2.5rem; }
+.stay__rating { font-size: .92rem; font-weight: 600; color: var(--violet); }

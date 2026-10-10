@@ -82,7 +82,7 @@
   fetch('/api/visits' + (counted ? '' : '?hit=1'), { cache: 'no-store' })
     .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
     .then(function (d) {
-      if (!d || typeof d.today !== 'number') return;
+      if (!d || d.ok !== true || typeof d.today !== 'number') return;
       try { localStorage.setItem('mas-visit', day); } catch (e) {}
       el.textContent = d.today === 1
         ? 'Hoy visitó el sitio 1 persona.'

@@ -330,17 +330,79 @@ STAYS = [
 
 # ------------------------------------------------------------------- reseñas
 # Solo se publican reseñas reales, copiadas tal cual de la plataforma.
-# Para sumar las de un alojamiento, agregá una entrada con su slug:
-#   fuente, url (página pública del alojamiento), puntaje, escala, cantidad,
+# La clave es el slug del alojamiento. Campos:
+#   fuente, url (ficha pública), puntaje, escala, cantidad,
+#   promedio=True si el puntaje es el promedio calculado de las reseñas cargadas,
 #   cats (puntajes por categoría, opcional) y quotes (comentarios textuales).
 # Un alojamiento sin entrada no muestra la sección.
+BOOKING = "Booking"
 REVIEWS = {
+    "lake-aguilas": dict(
+        fuente=BOOKING,
+        url="https://www.booking.com/hotel/ar/casa-en-el-lago-exclusiva.es.html",
+        puntaje="9,7", escala="10", cantidad=12, promedio=True,
+        quotes=[
+            dict(texto="Alquilen acá… no se van a arrepentir. Propiedad impecable en todo el aspecto.",
+                 autor="Ezequiel", origen="Argentina", fecha="noviembre de 2025"),
+            dict(texto="La ubicacion frente al lago es fantastica , el ventanal tiene la mejor vista que se puede pedir!!",
+                 autor="Cesar", origen="Argentina", fecha="octubre de 2025"),
+            dict(texto="Lugar recomendable con excelente vista al lago. La tranquilidad y que todo estaba en orden. Muy agradecido.",
+                 autor="Gareis", origen="Argentina", fecha="julio de 2026"),
+        ],
+    ),
+    "lake-bandurrias": dict(
+        fuente=BOOKING,
+        url="https://www.booking.com/hotel/ar/departamento-moderno-con-vista-infinita-al-nahuel.es.html",
+        puntaje="9,9", escala="10", cantidad=7, promedio=True,
+        quotes=[
+            dict(texto="Un lugar para volver. La excelente vista al lago Nahuel Huapi, la seguridad del lugar, lo equipado de la cocina.",
+                 autor="Victoria", origen="Argentina", fecha="enero de 2025"),
+            dict(texto="Departamento súper amplio y completo, con una maravillosa vista al lago.",
+                 autor="Guillermo", origen="Argentina", fecha="enero de 2026"),
+            dict(texto="Hermosa estadía. La casa tal cual se ve en las fotos, muy cómoda, y con todo lo necesario. La vista es maravillosa, realmente un sueño para disfrutar Bariloche. El entorno es tranquilo y la ubicación muy buena. Sin dudas volveríamos y la recomendamos totalmente.",
+                 autor="Tesuri", origen="Argentina", fecha="enero de 2026"),
+        ],
+    ),
+    "downtown-mitre": dict(
+        fuente=BOOKING,
+        url="https://www.booking.com/hotel/ar/magos-al-sur.es.html",
+        puntaje="9,8", escala="10", cantidad=18, promedio=True,
+        quotes=[
+            dict(texto="Excelente atención y predisposición de la dueña atenta todo el tiempo, superó las expectativas todo lindo limpio cerca del centro cómodo y con mucho espacio",
+                 autor="Ricardo", origen="Argentina", fecha="junio de 2025"),
+            dict(texto="La ubicación es excelente, y la atención de la encargada dispuesta en todo momento",
+                 autor="Mandrik", origen="Argentina", fecha="abril de 2025"),
+            dict(texto="¡La ubicación y vista al lago únicas! muy completo y confortable el depto., Verónica muy atenta a toda consulta, lugar que recomiendo y al que volveremos próximamente.",
+                 autor="Marcelo", origen="Argentina", fecha="diciembre de 2024"),
+        ],
+    ),
+    "lake-colibries": dict(
+        fuente=BOOKING,
+        url="https://www.booking.com/hotel/ar/departamento-colibries-para-dos-sobre-el-lago.es.html",
+        puntaje="9,5", escala="10", cantidad=2, promedio=True,
+        quotes=[
+            dict(texto="La ubicación hermosa! El micro pasa por la esquina para ir al centro, a la terminal... El depto muy lindo, limpio y cómodo con todo lo necesario (utensilios, pava eléctrica, heladera, etc). La anfitriona super amable ! La pasamos de diez.",
+                 autor="Jimena", origen="Argentina", fecha="agosto de 2025"),
+        ],
+    ),
+    "magos-al-mar": dict(
+        fuente=BOOKING,
+        url="https://www.booking.com/hotel/ar/magos-al-sur-mare.es.html",
+        puntaje="9,3", escala="10", cantidad=7, promedio=True,
+        cats=[
+            ("Ubicación", "9,1"),
+            ("Limpieza", "10"),
+            ("Relación calidad-precio", "9,5"),
+            ("Instalaciones y servicios", "10"),
+            ("Confort", "9,5"),
+            ("Personal", "10"),
+        ],
+        quotes=[],
+    ),
     "vintage": dict(
         fuente="Airbnb",
         url="https://www.airbnb.com.ar/rooms/1310259972888945107",
-        puntaje="5,0",
-        escala="5",
-        cantidad=4,
+        puntaje="5,0", escala="5", cantidad=4,
         cats=[
             ("Limpieza", "4,8"),
             ("Veracidad", "5,0"),
@@ -349,17 +411,35 @@ REVIEWS = {
             ("Ubicación", "5,0"),
             ("Precio según calidad", "5,0"),
         ],
-        quotes=[],  # ej.: dict(texto="...", autor="María", origen="Argentina", fecha="agosto de 2026")
+        quotes=[],
     ),
 }
+
+
+def _count(r):
+    n = r["cantidad"]
+    return f"{n} reseña" + ("s" if n != 1 else "")
+
+
+def rating_line(slug):
+    r = REVIEWS.get(slug)
+    if not r:
+        return ""
+    return (
+        f'<span class="stay__rating">{esc(r["puntaje"])} sobre {esc(r["escala"])} '
+        f'· {_count(r)} en {esc(r["fuente"])}</span>'
+    )
 
 
 def reviews_block(slug):
     r = REVIEWS.get(slug)
     if not r:
         return ""
-    n = r["cantidad"]
-    count = f"{n} reseña" + ("s" if n != 1 else "")
+    meta = (
+        f"Promedio de {_count(r)} en {esc(r['fuente'])}"
+        if r.get("promedio")
+        else f"{_count(r)} en {esc(r['fuente'])}"
+    )
     cats = ""
     if r.get("cats"):
         cats = '<dl class="rv__cats">' + "".join(
@@ -375,7 +455,10 @@ def reviews_block(slug):
                 f'<figure class="rv__quote"><blockquote><p>{esc(q["texto"])}</p></blockquote>'
                 f"<figcaption>{esc(who)}{esc(when)}</figcaption></figure>"
             )
-        quotes = f'<div class="rv__quotes">{items}</div>'
+        quotes = (
+            f'<div class="rv__quotes">{items}</div>'
+            f'<p class="rv__note">Comentarios copiados de {esc(r["fuente"])}. La fecha es la de la estadía.</p>'
+        )
     return f"""
 <section class="section section--tight" aria-labelledby="rv-title">
   <div class="wrap">
@@ -383,7 +466,7 @@ def reviews_block(slug):
     <div class="rv">
       <div class="rv__score">
         <p class="rv__num">{esc(r['puntaje'])}<span> sobre {esc(r['escala'])}</span></p>
-        <p class="rv__meta">{count} en {esc(r['fuente'])}</p>
+        <p class="rv__meta">{meta}</p>
         <a class="link" href="{esc(r['url'])}" target="_blank" rel="noopener">Ver en {esc(r['fuente'])}</a>
       </div>
       {cats}
@@ -391,6 +474,32 @@ def reviews_block(slug):
     {quotes}
   </div>
 </section>"""
+
+
+def home_reviews():
+    out = ""
+    for slug in ("lake-aguilas", "lake-bandurrias", "downtown-mitre"):
+        r = REVIEWS.get(slug)
+        stay = next((x for x in STAYS if x["slug"] == slug), None)
+        if not r or not r.get("quotes") or not stay:
+            continue
+        q = r["quotes"][0]
+        out += (
+            f'<figure class="rv__quote"><blockquote><p>{esc(q["texto"])}</p></blockquote>'
+            f'<figcaption>{esc(q["autor"])}, {esc(q["origen"])} · {esc(q["fecha"])} · '
+            f'<a href="alojamientos/{slug}.html">{esc(stay["nombre"])}</a></figcaption></figure>'
+        )
+    if not out:
+        return ""
+    return f"""
+<section class="section" id="huespedes" aria-labelledby="huespedes-title">
+  <div class="wrap">
+    <h2 id="huespedes-title">Lo que dicen los huéspedes</h2>
+    <p class="section__lede">Comentarios de huéspedes en Booking. En cada alojamiento están el puntaje y más opiniones.</p>
+    <div class="rv__quotes rv__quotes--home">{out}</div>
+  </div>
+</section>
+"""
 
 
 # ------------------------------------------------------------------- helpers
@@ -463,6 +572,7 @@ def stay_row(s, base):
           <span class="stay__text">
             <span class="stay__name">{esc(s['nombre'])}</span>
             <span class="stay__summary">{esc(s['resumen'])}</span>
+            {rating_line(s['slug'])}
           </span>
           <span class="stay__price">{price}</span>
         </a>"""
@@ -599,7 +709,8 @@ def build_home():
   </div>
 </section>
 
-<section class="section" id="familia">
+{home_reviews()}
+<section class="section section--tint" id="familia">
   <div class="wrap family">
     <div>
       <h2>La familia Merli</h2>
